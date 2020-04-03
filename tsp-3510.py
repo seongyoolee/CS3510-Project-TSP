@@ -48,5 +48,11 @@ if __name__ == '__main__':
         p.terminate()
         p.join()
 
+    # create a new file w/ algorithm results
+    f= open(sys.argv[2], "w+")
+    for i in range(10):
+         f.write("This is line %d\r\n" % (i+1))
+    f.close()
+
     # print processing time
     print(colored(str(time.time() - start_time), "yellow"))
