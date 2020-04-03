@@ -9,9 +9,10 @@ from termcolor import colored
 def calc_dist(num_nodes, x_vals, y_vals):
     matrix = np.ndarray((num_nodes, num_nodes), int)
     for i in range(num_nodes):
-        for j in range(i, num_nodes):
+        matrix[i][i] = 0
+        for j in range(i + 1, num_nodes):
             # check if it can be improved with numpy euclidian distance
-            matrix[i][j] = matrix[j][i] = int(math.sqrt(x_vals[i] ** 2 + y_vals[j] ** 2))
+            matrix[i][j] = matrix[j][i] = int(math.sqrt((x_vals[i] - x_vals[j]) ** 2 + (y_vals[i] - y_vals[j]) ** 2))
     return matrix
 
 def tsp(input_file):
