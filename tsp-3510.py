@@ -12,7 +12,7 @@ def calc_dist(num_nodes, x_vals, y_vals):
         matrix[i][i] = 0
         for j in range(i + 1, num_nodes):
             # check if it can be improved with numpy euclidian distance
-            matrix[i][j] = matrix[j][i] = int(math.sqrt((x_vals[i] - x_vals[j]) ** 2 + (y_vals[i] - y_vals[j]) ** 2))
+            matrix[i][j] = matrix[j][i] = round(math.sqrt((x_vals[i] - x_vals[j]) ** 2 + (y_vals[i] - y_vals[j]) ** 2))
     return matrix
 
 def tsp(input_file):
@@ -24,7 +24,7 @@ def tsp(input_file):
     y_vals = list(map(float, split_val[2::3]))
 
     adj_mat = calc_dist(len(nodes), x_vals, y_vals)
-    # print(adj_mat)
+    print(adj_mat)
 
 if __name__ == '__main__':
 
