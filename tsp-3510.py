@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import time
-import math
 import multiprocessing
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,31 +10,25 @@ def process_input(file):
     # read input file
     processed = pd.read_csv(open(file, "r"), sep=' ', names=['node', 'x', 'y'],
                             dtype={'node': str, 'x': np.float64, 'y': np.float64})
-    original = processed.copy()
-
-    # normalize
-    max_val = processed[['x', 'y']].max()
-    min_val = processed[['x', 'y']].min()
-    xy_ratio = ((max_val.x - min_val.x) / (max_val.y - min_val.y), 1)
-    xy_ratio = np.array(xy_ratio) / max(xy_ratio)
-
-    normalized = processed[['x', 'y']].apply(lambda e: (e - e.min()) / (e.max() - e.min()))
-    processed[['x', 'y']] = normalized.apply(lambda e: e * xy_ratio, axis=1)
-    return processed, original
+    return processed
 
 def find_closest(points, point):
     return find_distance(points, point).argmin()
 
 def find_distance(p1, p2):
-    return np.linalg.norm(p1 - p2, axis=1)
+    distances = np.round(np.linalg.norm(p1 - p2, axis=1))
+    return distances.astype(int)
 
 def get_neighbor_nodes(center, radix, domain):
-    radix = 1 if radix < 1 else radix
     # print(center, radix, domain)
+
     deltas = np.absolute(center - np.arange(domain))
     # print(colored(deltas, "blue"))
+
     distances = np.minimum(deltas, domain - deltas)
     # print(colored(distances, "yellow"))
+
+    radix = 1 if radix < 1 else radix
     gaussian_distribution = np.exp(-(distances * distances) / (2 * (radix * radix)))
     # print(colored(gaussian_distribution, "red"))
 
@@ -43,14 +36,10 @@ def get_neighbor_nodes(center, radix, domain):
     # axs[0].plot(distances)
     # axs[1].plot(gaussian_distribution)
     # plt.show()
-
     return gaussian_distribution
 
 def get_route(nodes, network):
     nodes['closest'] = nodes[['x', 'y']].apply(lambda e: find_closest(network, e), axis=1, raw=True)
-    # route = nodes.sort_values('closest')["node"].values.tolist()
-    # start_index = route.index('1')
-    # return route[start_index:] + route[:start_index]
     return nodes.sort_values('closest').index
 
 def tsp(manager_list):
@@ -60,13 +49,17 @@ def tsp(manager_list):
 
     # set number of iterations
     for iteration in range(100000):
+
+        # pick random node
         node_coord = manager_list[0].sample(1)[['x', 'y']].values
 
+        # get the closest neighbor in network
         closest_index = find_closest(manager_list[1], node_coord)
 
+        # get gaussian distribution on closest neighbor
         gaussian = get_neighbor_nodes(closest_index, int(manager_list[2] / 10), manager_list[1].shape[0])
 
-        network_copy = manager_list[1].copy()
+        # update network based on gaussian
         manager_list[1] += np.reshape(gaussian, (-1, 1)) * learning_rate * (node_coord - manager_list[1])
 
         # # show the change in network applying gaussian
@@ -81,7 +74,7 @@ def tsp(manager_list):
         if manager_list[2] < 1 or learning_rate < 0.0001:
             # compute finished
             break
-    
+
     # fig, axs = plt.subplots(2)
     # axs[0].plot(nodes.x, nodes.y, "or")
     # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
@@ -94,11 +87,19 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # process input file
-    nodes, original = process_input(sys.argv[1])
+    nodes = process_input(sys.argv[1])
 
-    # network of 8 * num_cities in tour
+    # network of 8 * num_nodes in tour
     population_size = nodes.shape[0] * 8
     network = np.random.rand(population_size, 2)
+
+    # test new network
+    max_val = nodes[['x', 'y']].max()
+    min_val = nodes[['x', 'y']].min()
+    x_range = max_val.x - min_val.y
+    y_range = max_val.y - min_val.y
+    network[:, 0] = network[:, 0] * x_range + min_val.x
+    network[:, 1] = network[:, 1] * y_range + min_val.y
 
     # setup shared variable
     manager = multiprocessing.Manager()
@@ -125,21 +126,20 @@ if __name__ == '__main__':
         p.join()
         
     # get values from shared variable
-    nodes = manager_list[0]
     network = manager_list[1]
 
     # get route
     route_index = get_route(nodes, network)
-    original = original.reindex(route_index)
-    route = original['node'].values.tolist()
-    route = np.roll(original['node'], -(route.index('1'))).tolist()
+    nodes = nodes.reindex(route_index)
+    route = nodes['node'].values.tolist()
+    route = np.roll(nodes['node'], -(route.index('1'))).tolist()
     route.append('1')
-    print(route)
+    print(colored(route, "green"))
 
     # get distance
-    distances = find_distance(original[['x', 'y']], np.roll(original[['x', 'y']], 1, axis=0))
+    distances = find_distance(nodes[['x', 'y']], np.roll(nodes[['x', 'y']], 1, axis=0))
     distance = np.sum(distances)
-    print(distance)
+    print(colored(distance, "green"))
 
     # compare with optimal route
     answer = ['1', '2', '6', '10', '11', '12', '15', '19', '18', '17', '21', '22', '23', '29', '28', '26', '20', '25', '27', '24', '16', '14', '13', '9', '7', '3', '4', '8', '5', '1']
