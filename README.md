@@ -21,6 +21,7 @@ Seon Lee (seongyoolee@gatech.edu)
 
 ## Runtime Instructions  
 *This project was built with Python-3.*
+
 In the command line, run the program in the following format:
 
 **$: python3 tsp-3510.py <input-coordinates.txt> <output-tour.txt> <time>**
@@ -30,4 +31,4 @@ In the command line, run the program in the following format:
 <output-tour.txt>: the name of the text file generated containing the cost of the computed TSP tour in the first line   
     and the sequence of node-IDs in the second line.
 
-<time>: maximum number of seconds the program should run
+time: maximum number of seconds the program should run
