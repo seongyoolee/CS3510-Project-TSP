@@ -19,10 +19,11 @@ Seon Lee (seongyoolee@gatech.edu)
 
     general outline of student info and project components
 
-## Runtime Instructions 
-This project was built with Python-3. In the command line, run the program in the following format:
+## Runtime Instructions  
+*This project was built with Python-3.*
+In the command line, run the program in the following format:
 
-$: python3 tsp-3510.py <input-coordinates.txt> <output-tour.txt> <time>
+**$: python3 tsp-3510.py <input-coordinates.txt> <output-tour.txt> <time>**
 
 <input-coordinates.txt>: the name of the text input file containing the set of nodes and pairwise distances
 
