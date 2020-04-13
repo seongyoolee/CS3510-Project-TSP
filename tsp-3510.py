@@ -22,6 +22,7 @@ def process_input(file):
     # read input file
     processed = pd.read_csv(open(file, "r"), sep=' ', names=['node', 'x', 'y'],
                             dtype={'node': str, 'x': np.float64, 'y': np.float64})
+    original = processed.copy()
 
     # normalize
     max_val = processed[['x', 'y']].max()
@@ -31,11 +32,14 @@ def process_input(file):
 
     normalized = processed[['x', 'y']].apply(lambda e: (e - e.min()) / (e.max() - e.min()))
     processed[['x', 'y']] = normalized.apply(lambda e: e * xy_ratio, axis=1)
-    return processed
+    return processed, original
 
 def find_closest(nodes, node):
-    distances = np.linalg.norm(nodes - node, axis=1)
-    return distances.argmin()
+    # distances = np.linalg.norm(nodes - node, axis=1)
+    return find_distance(nodes, node).argmin()
+
+def find_distance(nodes, node):
+    return np.linalg.norm(nodes - node, axis=1)
 
 def get_neighbor_nodes(center, radix, domain):
     radix = 1 if radix < 1 else radix
@@ -56,14 +60,15 @@ def get_neighbor_nodes(center, radix, domain):
 
 def get_route(nodes, network):
     nodes['closest'] = nodes[['x', 'y']].apply(lambda e: find_closest(network, e), axis=1, raw=True)
-    route = nodes.sort_values('closest')["node"].values.tolist()
-    start_index = route.index('1')
-    return route[start_index:] + route[:start_index]
+    # route = nodes.sort_values('closest')["node"].values.tolist()
+    # start_index = route.index('1')
+    # return route[start_index:] + route[:start_index]
+    return nodes.sort_values('closest').index
 
 def tsp():
 
     # process input file
-    nodes = process_input(sys.argv[1])
+    nodes, original = process_input(sys.argv[1])
 
     # network of 8 * num_cities in tour
     population_size = nodes.shape[0] * 8
@@ -104,8 +109,15 @@ def tsp():
     # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
     # plt.show()
 
-    route = get_route(nodes, network)
+    route_index = get_route(nodes, network)
+
+    original = original.reindex(route_index)
+    route = original['node'].values.tolist()
+    route = np.roll(original['node'], -(route.index('1'))).tolist()
+    route.append('1')
     print(route)
+    distances = find_distance(original[['x', 'y']], np.roll(original[['x', 'y']], 1, axis=0))
+    print(np.sum(distances))
 
 
 if __name__ == '__main__':
@@ -116,7 +128,7 @@ if __name__ == '__main__':
     start_time = time.time()
 
 
-    start_time2 = time.time()
+    # start_time2 = time.time()
 
     # setup process
     # p = multiprocessing.Process(target=tsp())
