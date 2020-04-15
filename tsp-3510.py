@@ -25,6 +25,7 @@ def get_neighbor_neurons(mu, sigma, sample_size):
     deltas = np.absolute(mu - np.arange(sample_size))
     # print(colored(deltas, "blue"))
 
+    # circular network
     distances = np.minimum(deltas, sample_size - deltas)
     # print(colored(distances, "yellow"))
 
@@ -40,8 +41,18 @@ def get_neighbor_neurons(mu, sigma, sample_size):
     return gaussian_distribution
 
 def get_route(nodes, network):
+
     nodes['closest'] = nodes[['x', 'y']].apply(lambda e: find_closest(network, e), axis=1, raw=True)
-    return nodes.sort_values('closest').index
+    sorted_nodes = nodes.sort_values('closest')
+
+    # plt.plot(sorted_nodes.x[4:], sorted_nodes.y[4:], "ok")
+    # plt.plot(sorted_nodes.x[0], sorted_nodes.y[0], "ob")
+    # plt.plot(sorted_nodes.x[1], sorted_nodes.y[1], "or")
+    # plt.plot(sorted_nodes.x[2], sorted_nodes.y[2], "oy")
+    # plt.plot(sorted_nodes.x[3], sorted_nodes.y[3], "og")
+    # plt.show()
+
+    return sorted_nodes.index
 
 def tsp(manager_list):
 
@@ -49,7 +60,8 @@ def tsp(manager_list):
     learning_rate = 0.8
 
     # set number of iterations
-    for iteration in range(100000):
+    # for iteration in range(100000):
+    while True:
 
         # pick random node
         node_coord = manager_list[0].sample(1)[['x', 'y']].values
@@ -95,10 +107,15 @@ if __name__ == '__main__':
     network = np.random.rand(neuron_network_size, 2)
     max_val = nodes[['x', 'y']].max()
     min_val = nodes[['x', 'y']].min()
-    x_range = max_val.x - min_val.y
+    x_range = max_val.x - min_val.x
     y_range = max_val.y - min_val.y
     network[:, 0] = network[:, 0] * x_range + min_val.x
     network[:, 1] = network[:, 1] * y_range + min_val.y
+
+    # fig, axs = plt.subplots(2)
+    # axs[0].plot(nodes.x, nodes.y, "or")
+    # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
+    # plt.show()
 
     # setup shared variable
     manager = multiprocessing.Manager()
@@ -135,12 +152,12 @@ if __name__ == '__main__':
     route = nodes['node'].values.tolist()
     route = np.roll(nodes['node'], -(route.index('1'))).tolist()
     route.append('1')
-    # print(colored(route, "green"))
+    print(colored(route, "green"))
 
     # get distance
     distances = find_distance(nodes[['x', 'y']], np.roll(nodes[['x', 'y']], 1, axis=0))
     distance = np.sum(distances)
-    # print(colored(distance, "green"))
+    print(colored(distance, "green"))
 
     # # compare with optimal route - MAT-TEST
     # answer = ['1', '2', '6', '10', '11', '12', '15', '19', '18', '17', '21', '22', '23', '29', '28', '26', '20', '25', '27', '24', '16', '14', '13', '9', '7', '3', '4', '8', '5', '1']
