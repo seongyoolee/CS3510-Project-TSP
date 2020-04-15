@@ -32,3 +32,5 @@ In the command line, run the program in the following format:
 <time>: maximum number of seconds the program should run
 
 To see debug print statements, pip install termcolor and uncomment the import statement to see print statements in color.
+
+To run the process once, rather than 10 times, change range(10) in main for loop to range(1).
