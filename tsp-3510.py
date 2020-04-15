@@ -1,10 +1,8 @@
 import sys
 import numpy as np
-import time
 import multiprocessing
 import pandas as pd
-import matplotlib.pyplot as plt
-from termcolor import colored
+# from termcolor import colored
 
 def process_input(file):
     # read input file
@@ -20,8 +18,6 @@ def find_distance(p1, p2):
     return distances.astype(int)
 
 def get_neighbor_neurons(mu, sigma, sample_size):
-    # normal distribution = e ^ (-0.5 * ((x - mu)/sigma)^2)
-
     deltas = np.absolute(mu - np.arange(sample_size))
     # print(colored(deltas, "blue"))
 
@@ -31,36 +27,19 @@ def get_neighbor_neurons(mu, sigma, sample_size):
 
     sigma = 1 if sigma < 1 else sigma
     gaussian_distribution = np.exp(-0.5 * ((distances * distances) / (sigma * sigma)))
-    # gaussian_distribution = np.exp(-(distances * distances) / (2 * (sigma * sigma)))
     # print(colored(gaussian_distribution, "red"))
 
-    # fig, axs = plt.subplots(2)
-    # axs[0].plot(distances)
-    # axs[1].plot(gaussian_distribution)
-    # plt.show()
     return gaussian_distribution
 
 def get_route(nodes, network):
-
     nodes['closest'] = nodes[['x', 'y']].apply(lambda e: find_closest(network, e), axis=1, raw=True)
     sorted_nodes = nodes.sort_values('closest')
-
-    # plt.plot(sorted_nodes.x[4:], sorted_nodes.y[4:], "ok")
-    # plt.plot(sorted_nodes.x[0], sorted_nodes.y[0], "ob")
-    # plt.plot(sorted_nodes.x[1], sorted_nodes.y[1], "or")
-    # plt.plot(sorted_nodes.x[2], sorted_nodes.y[2], "oy")
-    # plt.plot(sorted_nodes.x[3], sorted_nodes.y[3], "og")
-    # plt.show()
-
     return sorted_nodes.index
 
 def tsp(manager_list):
-
     # set learning rate
     learning_rate = 0.8
 
-    # set number of iterations
-    # for iteration in range(100000):
     while True:
 
         # pick random node
@@ -75,11 +54,6 @@ def tsp(manager_list):
         # update network based on gaussian
         manager_list[1] += np.reshape(gaussian, (-1, 1)) * learning_rate * (node_coord - manager_list[1])
 
-        # # show the change in network applying gaussian
-        # plt.plot(network_copy[:,0], network_copy[:,1], "or")
-        # plt.plot(network[:,0], network[:,1], "ob")
-        # plt.show()
-
         # update learning rate & population size
         learning_rate = learning_rate * 0.99997
         manager_list[2] = manager_list[2] * 0.9997
@@ -88,16 +62,8 @@ def tsp(manager_list):
             # compute finished
             break
 
-    # fig, axs = plt.subplots(2)
-    # axs[0].plot(nodes.x, nodes.y, "or")
-    # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
-    # plt.show()
-
 
 if __name__ == '__main__':
-
-    # record start time
-    start_time = time.time()
 
     # process input file
     nodes = process_input(sys.argv[1])
@@ -114,11 +80,6 @@ if __name__ == '__main__':
         network[:, 0] = network[:, 0] * x_range + min_val.x
         network[:, 1] = network[:, 1] * y_range + min_val.y
 
-        # fig, axs = plt.subplots(2)
-        # axs[0].plot(nodes.x, nodes.y, "or")
-        # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
-        # plt.show()
-
         # setup shared variable
         manager = multiprocessing.Manager()
         manager_list = manager.list()
@@ -130,7 +91,6 @@ if __name__ == '__main__':
         p = multiprocessing.Process(target=tsp, args=[manager_list])
 
         # start tsp
-        start_time2 = time.time()
         p.start()
 
         # wait for <time> or until process finishes
@@ -138,12 +98,9 @@ if __name__ == '__main__':
 
         # terminate
         if p.is_alive():
-            print("terminating")
-            # Terminate
+            # print("terminating")
             p.terminate()
             p.join()
-
-        print(colored(str(time.time() - start_time2), "green"))
 
         # get values from shared variable
         network = manager_list[1]
@@ -154,18 +111,14 @@ if __name__ == '__main__':
         route = nodes['node'].values.tolist()
         route = np.roll(nodes['node'], -(route.index('1'))).tolist()
         route.append('1')
-        print(colored(route, "blue"))
+        # print(colored(route, "blue"))
         route_list.append(route)
 
         # get distance
         distances = find_distance(nodes[['x', 'y']], np.roll(nodes[['x', 'y']], 1, axis=0))
         distance = np.sum(distances)
-        print(colored(distance, "green"))
+        # print(colored(distance, "green"))
         distance_list.append(distance)
-
-        # # compare with optimal route - MAT-TEST
-        # answer = ['1', '2', '6', '10', '11', '12', '15', '19', '18', '17', '21', '22', '23', '29', '28', '26', '20', '25', '27', '24', '16', '14', '13', '9', '7', '3', '4', '8', '5', '1']
-        # print((np.array_equal(answer, route)) or (np.array_equal(route, np.flip(answer))))
 
     # write results
     f = open(sys.argv[2], "w+")
@@ -176,6 +129,3 @@ if __name__ == '__main__':
     f.write("Average Distance: %s\n" % np.average(distance_list))
     f.write("Standard Deviation: %s" % np.std(distance_list))
     f.close()
-
-    # print processing time
-    print(colored(str(time.time() - start_time), "yellow"))

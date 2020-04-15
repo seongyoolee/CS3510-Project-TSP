@@ -1,9 +1,8 @@
 # CS3510-Project-TSP
 Timothy Xu (timxu@gatech.edu)
+Seon Lee (slee3056@gatech.edu)
 
-Seon Lee (seongyoolee@gatech.edu)
-
-*Submitted April 17, 2020*
+*Submitted April 15, 2020*
 
 ## Submitted Files
 - tsp-3510.py
@@ -28,7 +27,8 @@ In the command line, run the program in the following format:
 
 <input-coordinates.txt>: the name of the text input file containing the set of nodes and pairwise distances
 
-<output-tour.txt>: the name of the text file generated containing the cost of the computed TSP tour in the first line   
-    and the sequence of node-IDs in the second line.
+<output-tour.txt>: the name of the text file generated containing the cost of the computed TSP tour in the first line and the sequence of node-IDs in the second line.
 
-time: maximum number of seconds the program should run
+<time>: maximum number of seconds the program should run
+
+To see debug print statements, pip install termcolor and uncomment the import statement to see print statements in color.
