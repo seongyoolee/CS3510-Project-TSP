@@ -102,75 +102,80 @@ if __name__ == '__main__':
     # process input file
     nodes = process_input(sys.argv[1])
 
-    # neuron network of 8 * num_nodes in tour
-    neuron_network_size = nodes.shape[0] * 8
-    network = np.random.rand(neuron_network_size, 2)
-    max_val = nodes[['x', 'y']].max()
-    min_val = nodes[['x', 'y']].min()
-    x_range = max_val.x - min_val.x
-    y_range = max_val.y - min_val.y
-    network[:, 0] = network[:, 0] * x_range + min_val.x
-    network[:, 1] = network[:, 1] * y_range + min_val.y
+    distance_list, route_list = [], []
+    for i in range(10):
+        # neuron network of 8 * num_nodes in tour
+        neuron_network_size = nodes.shape[0] * 8
+        network = np.random.rand(neuron_network_size, 2)
+        max_val = nodes[['x', 'y']].max()
+        min_val = nodes[['x', 'y']].min()
+        x_range = max_val.x - min_val.x
+        y_range = max_val.y - min_val.y
+        network[:, 0] = network[:, 0] * x_range + min_val.x
+        network[:, 1] = network[:, 1] * y_range + min_val.y
 
-    # fig, axs = plt.subplots(2)
-    # axs[0].plot(nodes.x, nodes.y, "or")
-    # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
-    # plt.show()
+        # fig, axs = plt.subplots(2)
+        # axs[0].plot(nodes.x, nodes.y, "or")
+        # axs[1].plot(network[:, 0], network[:, 1], "ob", markersize=2)
+        # plt.show()
 
-    # setup shared variable
-    manager = multiprocessing.Manager()
-    manager_list = manager.list()
-    manager_list.append(nodes)
-    manager_list.append(network)
-    manager_list.append(neuron_network_size)
+        # setup shared variable
+        manager = multiprocessing.Manager()
+        manager_list = manager.list()
+        manager_list.append(nodes)
+        manager_list.append(network)
+        manager_list.append(neuron_network_size)
 
-    # setup process
-    p = multiprocessing.Process(target=tsp, args=[manager_list])
+        # setup process
+        p = multiprocessing.Process(target=tsp, args=[manager_list])
 
-    # start tsp
-    start_time2 = time.time()
-    p.start()
+        # start tsp
+        start_time2 = time.time()
+        p.start()
 
-    # wait for <time> or until process finishes
-    p.join(timeout=int(sys.argv[3]))
+        # wait for <time> or until process finishes
+        p.join(timeout=int(sys.argv[3]))
 
-    # terminate
-    if p.is_alive():
-        print("terminating")
-        # Terminate
-        p.terminate()
-        p.join()
+        # terminate
+        if p.is_alive():
+            print("terminating")
+            # Terminate
+            p.terminate()
+            p.join()
 
-    print(colored(str(time.time() - start_time2), "green"))
+        print(colored(str(time.time() - start_time2), "green"))
 
-    # get values from shared variable
-    network = manager_list[1]
+        # get values from shared variable
+        network = manager_list[1]
 
-    # get route
-    route_index = get_route(nodes, network)
-    nodes = nodes.reindex(route_index)
-    route = nodes['node'].values.tolist()
-    route = np.roll(nodes['node'], -(route.index('1'))).tolist()
-    route.append('1')
-    print(colored(route, "green"))
+        # get route
+        route_index = get_route(nodes, network)
+        nodes = nodes.reindex(route_index)
+        route = nodes['node'].values.tolist()
+        route = np.roll(nodes['node'], -(route.index('1'))).tolist()
+        route.append('1')
+        print(colored(route, "blue"))
+        route_list.append(route)
 
-    # get distance
-    distances = find_distance(nodes[['x', 'y']], np.roll(nodes[['x', 'y']], 1, axis=0))
-    distance = np.sum(distances)
-    print(colored(distance, "green"))
+        # get distance
+        distances = find_distance(nodes[['x', 'y']], np.roll(nodes[['x', 'y']], 1, axis=0))
+        distance = np.sum(distances)
+        print(colored(distance, "green"))
+        distance_list.append(distance)
 
-    # # compare with optimal route - MAT-TEST
-    # answer = ['1', '2', '6', '10', '11', '12', '15', '19', '18', '17', '21', '22', '23', '29', '28', '26', '20', '25', '27', '24', '16', '14', '13', '9', '7', '3', '4', '8', '5', '1']
-    # print((np.array_equal(answer, route)) or (np.array_equal(route, np.flip(answer))))
+        # # compare with optimal route - MAT-TEST
+        # answer = ['1', '2', '6', '10', '11', '12', '15', '19', '18', '17', '21', '22', '23', '29', '28', '26', '20', '25', '27', '24', '16', '14', '13', '9', '7', '3', '4', '8', '5', '1']
+        # print((np.array_equal(answer, route)) or (np.array_equal(route, np.flip(answer))))
 
     # write results
     f = open(sys.argv[2], "w+")
-    f.write("%d\n" % distance)
-    f.writelines(map(lambda e: e + ' ', route))
+    for i in range(10):
+        f.write("%d\n" % distance_list[i])
+        f.writelines(map(lambda e: e + ' ', route_list[i]))
+        f.write("\n")
+    f.write("Average Distance: %s\n" % np.average(distance_list))
+    f.write("Standard Deviation: %s" % np.std(distance_list))
     f.close()
 
     # print processing time
     print(colored(str(time.time() - start_time), "yellow"))
-
-    # Things that can be changed
-    # number of iterations, size of neuron network, initial learning rate, rate of change in learning rate, rate of change in neuron network size
